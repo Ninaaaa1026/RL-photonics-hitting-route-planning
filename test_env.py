@@ -7,11 +7,12 @@ UNIT = 50  # pixels
 MAZE_H = 3  # grid height
 MAZE_W = 3  # grid width
 
-class Maze(tk.Tk, object):
+class Plane(tk.Tk, object):
     def __init__(self):
-        super(Maze, self).__init__()
+        super(Plane, self).__init__()
         self.action_space = ['u', 'd', 'l', 'r']
         self.n_actions = len(self.action_space)
+        self.n_features = 2
         self.title('panel')
         self.geometry('{0}x{1}'.format(MAZE_H * UNIT, MAZE_H * UNIT))
         self._build_maze()
@@ -62,8 +63,22 @@ class Maze(tk.Tk, object):
         time.sleep(0.5)
         self.canvas.delete(self.rect)
         self.draw()
-        # return observation
-        return self.canvas.coords(self.rect)
+        # return observation QLearning
+        # return self.canvas.coords(self.rect)
+        # return observation DQN
+        nearest = np.array(self.canvas.coords(self.rect)[:2])
+        minimum = 99999
+        for coord in self.hits:
+            dist = abs(np.sum(np.array(self.canvas.coords(self.rect)[:2]) - np.array(self.canvas.coords(coord)[:2])))
+            if dist == 0:
+                self.canvas.create_rectangle(self.canvas.coords(coord), fill='yellow')
+                self.canvas.delete(coord)
+                remove=coord
+            elif dist < minimum:
+                minimum = dist
+                nearest = coord
+        self.hits.remove(remove)
+        return (np.array(self.canvas.coords(self.rect)[:2]) - np.array(self.canvas.coords(nearest)[:2])) / (MAZE_H * UNIT)
 
     def step(self, action):
         s = self.canvas.coords(self.rect)
@@ -83,26 +98,42 @@ class Maze(tk.Tk, object):
 
         self.canvas.move(self.rect, base_action[0], base_action[1])  # move agent
 
-        s_ = self.canvas.coords(self.rect)  # next state
+        next_coords = self.canvas.coords(self.rect)  # next state
 
         # reward function
         coordsObj = {}
         for coord in self.hits:
             coordsObj.update({str(self.canvas.coords(coord)):coord} )
-        if str(s_) in coordsObj.keys():
+
+        if str(next_coords) in coordsObj.keys():
             reward = 10
-            self.canvas.delete(coordsObj.get(str(s_)))
-            self.canvas.create_rectangle(s_,fill='yellow')
-            self.hits.remove(coordsObj.get(str(s_)))
+            self.canvas.delete(coordsObj.get(str(next_coords)))
+            self.canvas.create_rectangle(next_coords,fill='yellow')
+            self.hits.remove(coordsObj.get(str(next_coords)))
             if len(self.hits) == 0:
                 done = True
-                s_ = 'terminal'
+                # #QLearning
+                # next_coords = 'terminal'
             else:
                 done = False
         else:
             reward = -1
             done = False
+        #DQN
+        if not done:
+            nearest = np.array([0,0])
+            minimum = 99999
+            for coord in self.hits:
+                dist = np.sum(np.array(next_coords[:2]) - np.array(self.canvas.coords(coord)[:2]))
+                if dist < minimum:
+                    minimum = dist
+                    nearest = coord
+            s_ = (np.array(next_coords[:2]) - np.array(self.canvas.coords(nearest)[:2]))/(MAZE_H*UNIT)
+        else:
+            s_ = next_coords[:2]
         return s_, reward, done
+        # #QLearning
+        # return next_coords,reward, done
 
     def render(self):
         time.sleep(0.1)
@@ -121,6 +152,6 @@ def update():
 
 if __name__ == '__main__':
     function=sys.argv[0]
-    env = Maze().__init__()
-    env.after(100, update)
+    env = Plane().__init__()
+    env.after(200, update)
     env.mainloop()

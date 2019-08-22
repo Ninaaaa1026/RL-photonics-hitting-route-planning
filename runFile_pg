@@ -1,0 +1,45 @@
+from test_env import Plane
+from pg import PolicyGradient
+
+def update():
+    for episode in range(100):
+        # initial observation
+        observation = env.reset()
+        totalReward = 0
+        while True:
+            # fresh env
+            env.render()
+
+            # RL choose action based on observation
+
+            action = RL.choose_action(observation)
+            # RL take action and get next observation and reward
+            observation_, reward, done = env.step(action)
+
+            totalReward += reward
+
+            RL.store_transition(observation, action, reward)
+
+            # swap observation
+            observation = observation_
+
+            # break while loop when end of this episode
+            if done:
+                RL.learn()
+                break
+
+        print(totalReward)
+
+    # end of game
+    print('game over')
+    env.destroy()
+
+if __name__ == "__main__":
+    env = Plane()
+    RL = PolicyGradient(env.n_actions, env.n_features,
+                      learning_rate=0.01,
+                      reward_decay=0.9,
+                      output_graph=True
+                      )
+    env.after(200, update)
+    env.mainloop()
