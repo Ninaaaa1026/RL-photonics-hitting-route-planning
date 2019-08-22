@@ -3,9 +3,9 @@ import time
 import sys
 import tkinter as tk
 
-UNIT = 50  # pixels
-MAZE_H = 3  # grid height
-MAZE_W = 3  # grid width
+UNIT = 10  # pixels
+MAZE_H = 15  # grid height
+MAZE_W = 15  # grid width
 
 class Plane(tk.Tk, object):
     def __init__(self):

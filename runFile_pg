@@ -37,8 +37,8 @@ def update():
 if __name__ == "__main__":
     env = Plane()
     RL = PolicyGradient(env.n_actions, env.n_features,
-                      learning_rate=0.01,
-                      reward_decay=0.9,
+                      learning_rate=0.1,
+                      reward_decay=0.7,
                       output_graph=True
                       )
     env.after(200, update)
